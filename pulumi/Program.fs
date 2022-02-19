@@ -7,7 +7,8 @@ open Pulumi.Aws.S3
 open Pulumi.Aws.Iam
 open Pulumi.Aws.Iam.Inputs
 open System.Text.Json
-open System.Collections.Generic
+open Pulumi.Aws.CloudFront
+open Pulumi.Aws.CloudFront.Inputs
 
 let infra () =
 
@@ -38,7 +39,7 @@ let infra () =
         let bucketArgs = BucketArgs(Acl = "private")
 
         Bucket(bucketName, bucketArgs)
-    
+
 
     let lambdaRole =
 
@@ -48,13 +49,13 @@ let infra () =
                     [ ("Version", "2012-10-17")
                       ("Statement",
                        Map<string, obj>
-                           [ ("Action", "sts:AssumeRole");
-                                 ("Effect", "Allow");
-                                 ("Sid", "");
-                                 ("Principal",
-                                  Map [ ("Service",
-                                         [ "lambda.amazonaws.com"
-                                           "edgelambda.amazonaws.com" ]) ]) ]) ]
+                           [ ("Action", "sts:AssumeRole")
+                             ("Effect", "Allow")
+                             ("Sid", "")
+                             ("Principal",
+                              Map [ ("Service",
+                                     [ "lambda.amazonaws.com"
+                                       "edgelambda.amazonaws.com" ]) ]) ]) ]
             )
 
 
@@ -66,7 +67,7 @@ let infra () =
                 ManagedPolicyArns = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
             )
         )
-    
+
     let imageBucketPolicy =
 
         let lambdaPrincipal =
@@ -78,21 +79,23 @@ let infra () =
             GetPolicyDocumentStatementInputArgs(
                 Principals = inputList [ input lambdaPrincipal ],
                 Actions = inputList [ input "s3:GetObject" ],
-                Resources =
-                    inputList [ io (Output.Format($"{bucket.Arn}/*")) ]
+                Resources = inputList [ io (Output.Format($"{bucket.Arn}/*")) ]
             )
-        
-        
+
+
         let putObjectStatement =
             GetPolicyDocumentStatementInputArgs(
                 Principals = inputList [ input lambdaPrincipal ],
                 Actions = inputList [ input "s3:PutObject" ],
-                Resources =
-                    inputList [ io (Output.Format($"{bucket.Arn}/*")) ]
+                Resources = inputList [ io (Output.Format($"{bucket.Arn}/*")) ]
             )
 
         let policyDocumentInvokeArgs =
-            GetPolicyDocumentInvokeArgs(Statements = inputList [input getObjectStatement; input putObjectStatement])
+            GetPolicyDocumentInvokeArgs(
+                Statements =
+                    inputList [ input getObjectStatement
+                                input putObjectStatement ]
+            )
 
         let policyDocument =
             GetPolicyDocument.Invoke(policyDocumentInvokeArgs)
@@ -103,8 +106,88 @@ let infra () =
         BucketPolicy("imageBucketpolicy", bucketPolicyArgs)
 
 
+    let testLambda =
+
+        let lambdaFunctionArgs =
+            Lambda.FunctionArgs(
+                Handler = "index.handler",
+                Runtime = "nodejs14.x",
+                MemorySize = 512,
+                Timeout = 5,
+                Role = lambdaRole.Arn,
+                Publish = true,
+                Code =
+                    input (
+                        AssetArchive(
+                            Map<string, AssetOrArchive>
+                                [ ("index.js",
+                                   StringAsset(
+                                       "exports.handler = (e, c, cb) => cb(null, {statusCode: 200, body: \"Hello, world!\"});"
+                                   )) ]
+                        )
+                    )
+            )
+
+        Lambda.Function("imageResizerLambda", lambdaFunctionArgs)
+
+    let cloudFrontDistribution =
+
+        let originArgs =
+            DistributionOriginArgs(DomainName = bucket.BucketDomainName, OriginId = "myS3Origin")
+
+        let viewerCertificate =
+            DistributionViewerCertificateArgs(CloudfrontDefaultCertificate = true)
+
+        let forwardeValueCookies =
+            DistributionDefaultCacheBehaviorForwardedValuesCookiesArgs(Forward = "none")
+
+        let forwardedValuesArgs =
+            DistributionDefaultCacheBehaviorForwardedValuesArgs(
+                QueryString = true,
+                QueryStringCacheKeys = inputList [ input "d" ],
+                Cookies = forwardeValueCookies
+            )
+
+        let defaultCacheBehaviorArgs =
+            DistributionDefaultCacheBehaviorArgs(
+                AllowedMethods =
+                    inputList [ input "GET"
+                                input "HEAD"
+                                input "OPTIONS" ],
+                CachedMethods = inputList [ input "GET"; input "HEAD" ],
+                TargetOriginId = "myS3Origin",
+                ForwardedValues = forwardedValuesArgs,
+                ViewerProtocolPolicy = "https-only",
+                MinTtl = 100,
+                DefaultTtl = 3600,
+                MaxTtl = 86400,
+                SmoothStreaming = false,
+                Compress = true
+            )
+
+        let geoRestrictions =
+            DistributionRestrictionsGeoRestrictionArgs(RestrictionType = "none")
+
+        let restrictionArgs =
+            DistributionRestrictionsArgs(GeoRestriction = geoRestrictions)
+
+        let cloudFrontDistributionArgs =
+            DistributionArgs(
+                Origins = originArgs,
+                Enabled = true,
+                Comment = "istribution for content delivery",
+                DefaultRootObject = "index.html",
+                PriceClass = "PriceClass_100",
+                ViewerCertificate = viewerCertificate,
+                DefaultCacheBehavior = defaultCacheBehaviorArgs,
+                Restrictions = restrictionArgs
+            )
+
+        Distribution("imageResizerDistribution", cloudFrontDistributionArgs)
+
     // Export the name of the bucket
-    dict [ ("bucketName", bucket.Id :> obj) ]
+    dict [ ("bucketName", bucket.Id :> obj)
+           ("distribution", cloudFrontDistribution.Id :> obj) ]
 
 [<EntryPoint>]
 let main _ = Deployment.run infra
