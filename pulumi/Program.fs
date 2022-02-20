@@ -12,6 +12,11 @@ open Pulumi.Aws.CloudFront.Inputs
 
 let infra () =
 
+    (*
+--------------------
+Bucket
+--------------------
+*)
     let bucket =
 
         let asyncCallerIndentity =
@@ -40,7 +45,23 @@ let infra () =
 
         Bucket(bucketName, bucketArgs)
 
+    (*
+--------------------
+OAI
+--------------------
+*)
+    let originAccessIdentity =
 
+        let originAccessIdentityArgs =
+            OriginAccessIdentityArgs(Comment = "Access identy to access the origin bucket")
+
+        OriginAccessIdentity("Cloudfront Origin Access Identity", originAccessIdentityArgs)
+
+    (*
+--------------------
+IAM
+--------------------
+*)
     let lambdaRole =
 
         let assumeRolePolicyJson =
@@ -68,26 +89,33 @@ let infra () =
             )
         )
 
+    let lambdaPrincipal =
+        GetPolicyDocumentStatementPrincipalInputArgs(Type = "AWS", Identifiers = inputList [ io lambdaRole.Arn ])
+
+    let cloudFrontPrincipal =
+        GetPolicyDocumentStatementPrincipalInputArgs(
+            Type = "AWS",
+            Identifiers = inputList [ io originAccessIdentity.IamArn ]
+        )
+
     let imageBucketPolicy =
-
-        let lambdaPrincipal =
-            GetPolicyDocumentStatementPrincipalInputArgs(Type = "AWS", Identifiers = inputList [ io lambdaRole.Arn ])
-
-        //let globalPrincipal =  GetPolicyDocumentStatementPrincipalInputArgs(Type = "AWS", Identifiers = inputList [ input "*" ])
 
         let getObjectStatement =
             GetPolicyDocumentStatementInputArgs(
-                Principals = inputList [ input lambdaPrincipal ],
+                Principals = inputList [ input lambdaPrincipal; input cloudFrontPrincipal ],
                 Actions = inputList [ input "s3:GetObject" ],
-                Resources = inputList [ io (Output.Format($"{bucket.Arn}/*")) ]
+                Resources =
+                    inputList [ io bucket.Arn
+                                io (Output.Format($"{bucket.Arn}/*")) ]
             )
-
 
         let putObjectStatement =
             GetPolicyDocumentStatementInputArgs(
                 Principals = inputList [ input lambdaPrincipal ],
                 Actions = inputList [ input "s3:PutObject" ],
-                Resources = inputList [ io (Output.Format($"{bucket.Arn}/*")) ]
+                Resources =
+                    inputList [ io bucket.Arn
+                                io (Output.Format($"{bucket.Arn}/*")) ]
             )
 
         let policyDocumentInvokeArgs =
@@ -105,8 +133,12 @@ let infra () =
 
         BucketPolicy("imageBucketpolicy", bucketPolicyArgs)
 
-
-    let testLambda =
+    (*
+--------------------
+Functions
+--------------------
+*)
+    let originResponseLambda =
 
         let lambdaFunctionArgs =
             Lambda.FunctionArgs(
@@ -130,10 +162,28 @@ let infra () =
 
         Lambda.Function("imageResizerLambda", lambdaFunctionArgs)
 
+
+    (*
+--------------------
+Distribution
+--------------------
+*)
     let cloudFrontDistribution =
 
+
+
+        let s3OriginConfigArgs =
+            DistributionOriginS3OriginConfigArgs(
+                OriginAccessIdentity = originAccessIdentity.CloudfrontAccessIdentityPath
+            )
+
+
         let originArgs =
-            DistributionOriginArgs(DomainName = bucket.BucketDomainName, OriginId = "myS3Origin")
+            DistributionOriginArgs(
+                DomainName = bucket.BucketDomainName,
+                OriginId = "myS3Origin",
+                S3OriginConfig = s3OriginConfigArgs
+            )
 
         let viewerCertificate =
             DistributionViewerCertificateArgs(CloudfrontDefaultCertificate = true)
@@ -185,7 +235,11 @@ let infra () =
 
         Distribution("imageResizerDistribution", cloudFrontDistributionArgs)
 
-    // Export the name of the bucket
+    (*
+--------------------
+Exports
+--------------------
+*)
     dict [ ("bucketName", bucket.Id :> obj)
            ("distribution", cloudFrontDistribution.Id :> obj) ]
 
