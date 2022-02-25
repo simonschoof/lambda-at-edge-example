@@ -14,7 +14,7 @@ let infra () =
 
     (*
 --------------------
-Bucket
+S3
 --------------------
 *)
     let bucket =
@@ -45,9 +45,10 @@ Bucket
 
         Bucket(bucketName, bucketArgs)
 
+
     (*
 --------------------
-OAI
+IAM
 --------------------
 *)
     let originAccessIdentity =
@@ -55,13 +56,8 @@ OAI
         let originAccessIdentityArgs =
             OriginAccessIdentityArgs(Comment = "Access identy to access the origin bucket")
 
-        OriginAccessIdentity("Cloudfront Origin Access Identity", originAccessIdentityArgs)
+        OriginAccessIdentity("Cloudfront Origin Access Identity", originAccessIdentityArgs)  
 
-    (*
---------------------
-IAM
---------------------
-*)
     let lambdaRole =
 
         let assumeRolePolicyJson =
@@ -135,7 +131,7 @@ IAM
 
     (*
 --------------------
-Functions
+Lambda
 --------------------
 *)
     let originResponseLambda =
@@ -165,7 +161,7 @@ Functions
 
     (*
 --------------------
-Distribution
+CloudFront
 --------------------
 *)
     let cloudFrontDistribution =
@@ -207,7 +203,7 @@ Distribution
                 CachedMethods = inputList [ input "GET"; input "HEAD" ],
                 TargetOriginId = "myS3Origin",
                 ForwardedValues = forwardedValuesArgs,
-                ViewerProtocolPolicy = "https-only",
+                ViewerProtocolPolicy = "redirect-to-https",
                 MinTtl = 100,
                 DefaultTtl = 3600,
                 MaxTtl = 86400,
@@ -240,6 +236,7 @@ Distribution
 Exports
 --------------------
 *)
+    // dict [ ("bucketName", bucket.Id :> obj) ]
     dict [ ("bucketName", bucket.Id :> obj)
            ("distribution", cloudFrontDistribution.Id :> obj) ]
 
