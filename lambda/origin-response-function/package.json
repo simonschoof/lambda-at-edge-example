@@ -1,5 +1,18 @@
 {
+  "name": "origin-response-function",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {},
   "devDependencies": {
-    "typescript": "^4.5.5"
-  }
+    "@types/aws-lambda": "8.10.93",
+    "typescript": "4.6.2"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig-build.json", 
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }

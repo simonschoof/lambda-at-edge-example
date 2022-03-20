@@ -148,15 +148,20 @@ Lambda
                     input (
                         AssetArchive(
                             Map<string, AssetOrArchive>
-                                [ ("index.js",
-                                   StringAsset(
-                                       "exports.handler = (e, c, cb) => cb(null, {statusCode: 200, body: \"Hello, world!\"});"
+                                [ (".",
+                                   FileArchive(
+                                       "../lambda/origin-response-function/dist"
                                    )) ]
                         )
                     )
             )
+        
+        let lambdaOptions = 
+            let customResourceOptions = CustomResourceOptions()
+            customResourceOptions.Provider <- Provider("useast1", ProviderArgs (Region = "us-east-1" ));
+            customResourceOptions
 
-        Lambda.Function("imageResizerLambda", lambdaFunctionArgs)
+        Lambda.Function("imageResizerLambda", lambdaFunctionArgs, lambdaOptions )
 
 
     (*
@@ -194,6 +199,11 @@ CloudFront
                 Cookies = forwardeValueCookies
             )
 
+        let lambdaOriginResponseAssociation = DistributionDefaultCacheBehaviorLambdaFunctionAssociationArgs(
+            EventType = "origin-response",
+            LambdaArn = Output.Format($"{originResponseLambda.Arn}:{originResponseLambda.Version}")
+        )
+
         let defaultCacheBehaviorArgs =
             DistributionDefaultCacheBehaviorArgs(
                 AllowedMethods =
@@ -208,7 +218,8 @@ CloudFront
                 DefaultTtl = 3600,
                 MaxTtl = 86400,
                 SmoothStreaming = false,
-                Compress = true
+                Compress = true,
+                LambdaFunctionAssociations = inputList [input lambdaOriginResponseAssociation]
             )
 
         let geoRestrictions =
