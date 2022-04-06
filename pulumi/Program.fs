@@ -105,20 +105,21 @@ IAM
                                 io (Output.Format($"{bucket.Arn}/*")) ]
             )
 
-        let putObjectStatement =
+        let putObjectAndListBucketStatement =
             GetPolicyDocumentStatementInputArgs(
                 Principals = inputList [ input lambdaPrincipal ],
-                Actions = inputList [ input "s3:PutObject" ],
+                Actions = inputList [ input "s3:PutObject"; input "s3:ListBucket" ],
                 Resources =
                     inputList [ io bucket.Arn
                                 io (Output.Format($"{bucket.Arn}/*")) ]
             )
+        
 
         let policyDocumentInvokeArgs =
             GetPolicyDocumentInvokeArgs(
                 Statements =
                     inputList [ input getObjectStatement
-                                input putObjectStatement ]
+                                input putObjectAndListBucketStatement ]
             )
 
         let policyDocument =
@@ -181,7 +182,7 @@ CloudFront
 
         let originArgs =
             DistributionOriginArgs(
-                DomainName = bucket.BucketDomainName,
+                DomainName = bucket.BucketRegionalDomainName,
                 OriginId = "myS3Origin",
                 S3OriginConfig = s3OriginConfigArgs
             )
@@ -218,8 +219,8 @@ CloudFront
                 DefaultTtl = 3600,
                 MaxTtl = 86400,
                 SmoothStreaming = false,
-                Compress = true,
-                LambdaFunctionAssociations = inputList [input lambdaOriginResponseAssociation]
+                Compress = true
+                // LambdaFunctionAssociations = inputList [input lambdaOriginResponseAssociation]
             )
 
         let geoRestrictions =
