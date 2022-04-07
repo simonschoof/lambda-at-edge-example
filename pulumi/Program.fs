@@ -202,7 +202,8 @@ CloudFront
 
         let lambdaOriginResponseAssociation = DistributionDefaultCacheBehaviorLambdaFunctionAssociationArgs(
             EventType = "origin-response",
-            LambdaArn = Output.Format($"{originResponseLambda.Arn}:{originResponseLambda.Version}")
+            LambdaArn = Output.Format($"{originResponseLambda.Arn}:{originResponseLambda.Version}"),
+            IncludeBody = false
         )
 
         let defaultCacheBehaviorArgs =
@@ -219,8 +220,8 @@ CloudFront
                 DefaultTtl = 3600,
                 MaxTtl = 86400,
                 SmoothStreaming = false,
-                Compress = true
-                // LambdaFunctionAssociations = inputList [input lambdaOriginResponseAssociation]
+                Compress = true,
+                LambdaFunctionAssociations = inputList [input lambdaOriginResponseAssociation]
             )
 
         let geoRestrictions =
