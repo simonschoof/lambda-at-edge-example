@@ -56,7 +56,7 @@ IAM
         let originAccessIdentityArgs =
             OriginAccessIdentityArgs(Comment = "Access identy to access the origin bucket")
 
-        OriginAccessIdentity("Cloudfront Origin Access Identity", originAccessIdentityArgs)  
+        OriginAccessIdentity("Cloudfront Origin Access Identity", originAccessIdentityArgs)
 
     let lambdaRole =
 
@@ -98,7 +98,9 @@ IAM
 
         let getObjectStatement =
             GetPolicyDocumentStatementInputArgs(
-                Principals = inputList [ input lambdaPrincipal; input cloudFrontPrincipal ],
+                Principals =
+                    inputList [ input lambdaPrincipal
+                                input cloudFrontPrincipal ],
                 Actions = inputList [ input "s3:GetObject" ],
                 Resources =
                     inputList [ io bucket.Arn
@@ -108,12 +110,14 @@ IAM
         let putObjectAndListBucketStatement =
             GetPolicyDocumentStatementInputArgs(
                 Principals = inputList [ input lambdaPrincipal ],
-                Actions = inputList [ input "s3:PutObject"; input "s3:ListBucket" ],
+                Actions =
+                    inputList [ input "s3:PutObject"
+                                input "s3:ListBucket" ],
                 Resources =
                     inputList [ io bucket.Arn
                                 io (Output.Format($"{bucket.Arn}/*")) ]
             )
-        
+
 
         let policyDocumentInvokeArgs =
             GetPolicyDocumentInvokeArgs(
@@ -135,6 +139,31 @@ IAM
 Lambda
 --------------------
 *)
+    let lambdaOptions =
+        let customResourceOptions = CustomResourceOptions()
+        customResourceOptions.Provider <- Provider("useast1", ProviderArgs(Region = "us-east-1"))
+        customResourceOptions
+
+    let viewerRequestLambda =
+
+        let lambdaFunctionArgs =
+            Lambda.FunctionArgs(
+                Handler = "index.handler",
+                Runtime = "nodejs14.x",
+                MemorySize = 128,
+                Timeout = 1,
+                Role = lambdaRole.Arn,
+                Publish = true,
+                Code =
+                    input (
+                        AssetArchive(
+                            Map<string, AssetOrArchive> [ (".", FileArchive("../lambda/viewer-request-function/dist")) ]
+                        )
+                    )
+            )
+
+        Lambda.Function("viewerRequestLambda", lambdaFunctionArgs, lambdaOptions)
+
     let originResponseLambda =
 
         let lambdaFunctionArgs =
@@ -149,21 +178,12 @@ Lambda
                     input (
                         AssetArchive(
                             Map<string, AssetOrArchive>
-                                [ (".",
-                                   FileArchive(
-                                       "../lambda/origin-response-function/dist"
-                                   )) ]
+                                [ (".", FileArchive("../lambda/origin-response-function/dist")) ]
                         )
                     )
             )
-        
-        let lambdaOptions = 
-            let customResourceOptions = CustomResourceOptions()
-            customResourceOptions.Provider <- Provider("useast1", ProviderArgs (Region = "us-east-1" ));
-            customResourceOptions
 
-        Lambda.Function("imageResizerLambda", lambdaFunctionArgs, lambdaOptions )
-
+        Lambda.Function("originResponseLambda", lambdaFunctionArgs, lambdaOptions)
 
     (*
 --------------------
@@ -200,11 +220,19 @@ CloudFront
                 Cookies = forwardeValueCookies
             )
 
-        let lambdaOriginResponseAssociation = DistributionDefaultCacheBehaviorLambdaFunctionAssociationArgs(
-            EventType = "origin-response",
-            LambdaArn = Output.Format($"{originResponseLambda.Arn}:{originResponseLambda.Version}"),
-            IncludeBody = false
-        )
+        let lambdaViewerRequestAssociation =
+            DistributionDefaultCacheBehaviorLambdaFunctionAssociationArgs(
+                EventType = "viewer-request",
+                LambdaArn = Output.Format($"{viewerRequestLambda.Arn}:{viewerRequestLambda.Version}"),
+                IncludeBody = false
+            )
+
+        let lambdaOriginResponseAssociation =
+            DistributionDefaultCacheBehaviorLambdaFunctionAssociationArgs(
+                EventType = "origin-response",
+                LambdaArn = Output.Format($"{originResponseLambda.Arn}:{originResponseLambda.Version}"),
+                IncludeBody = false
+            )
 
         let defaultCacheBehaviorArgs =
             DistributionDefaultCacheBehaviorArgs(
@@ -221,7 +249,7 @@ CloudFront
                 MaxTtl = 86400,
                 SmoothStreaming = false,
                 Compress = true,
-                LambdaFunctionAssociations = inputList [input lambdaOriginResponseAssociation]
+                LambdaFunctionAssociations = inputList [ input lambdaViewerRequestAssociation ]
             )
 
         let geoRestrictions =
