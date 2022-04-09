@@ -22,7 +22,7 @@ export async function handler(event: { Records: { cf: { request: any; } }[]; }):
 
     const params = parseParams(urlsSearchParams, fwdUri);
 
-    if (!params.width || !params.height) {
+    if (validateParams(params)) {
         console.log("No dimension params found, returning original image");
         return request;
     }
@@ -62,4 +62,8 @@ function parseParams(params: URLSearchParams, uri: string): ResizeParameters {
     }
     return resizerParams
 
+}
+
+function validateParams(params: ResizeParameters) {
+    return !params.width || !params.height || params.width <= 0 || params.height <= 0;
 }
