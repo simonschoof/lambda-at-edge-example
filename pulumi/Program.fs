@@ -216,7 +216,7 @@ CloudFront
         let forwardedValuesArgs =
             DistributionDefaultCacheBehaviorForwardedValuesArgs(
                 QueryString = true,
-                QueryStringCacheKeys = inputList [ input "d" ],
+                QueryStringCacheKeys = inputList [ input "width"; input "height"; input "format" ],
                 Cookies = forwardeValueCookies
             )
 

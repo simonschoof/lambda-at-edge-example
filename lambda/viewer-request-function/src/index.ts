@@ -1,93 +1,65 @@
 import { CloudFrontRequest } from "aws-lambda";
-import querystring from 'querystring';
 
-const variables = {
-    allowedDimension : [ {w:100,h:100}, {w:200,h:200}, {w:300,h:300}, {w:400,h:400} ],
-    defaultDimension : {w:200,h:200},
-    variance: 20,
-    webpExtension: 'webp'
-};
+type ImageFormat = 'webp' | 'png' | 'jpg';
 
-export async function handler(event: {Records: {cf: {request: any;}}[];}): Promise<CloudFrontRequest>{
-    console.log("hello cf request");
+interface ResizeParameters {
+    width?: number;
+    height?: number;
+    format: ImageFormat;
+}
+
+const AllowedDimensions = {
+    maxWidth: 1000,
+    maxHeight: 1000,
+}
+
+export async function handler(event: { Records: { cf: { request: any; } }[]; }): Promise<CloudFrontRequest> {
+    console.log("Entering viewer request");
+
     const request = event.Records[0].cf.request;
-    const headers = request.headers;
+    const urlsSearchParams = new URLSearchParams(request.querystring);
+    const fwdUri = request.uri;
 
-    // parse the querystrings key-value pairs. In our case it would be d=100x100
-    const params = new URLSearchParams(request.querystring);
+    const params = parseParams(urlsSearchParams, fwdUri);
 
-    // fetch the uri of original image
-    let fwdUri = request.uri;
-
-    // get the dimension of the image
-    let dimension = params.get('d');   
-    // if there is no dimension attribute, just pass the request
-    if(dimension === null){
-        console.log("no dimension params");
+    if (!params.width || !params.height) {
+        console.log("No dimension params found, returning original image");
         return request;
     }
-    // read the dimension parameter value = width x height and split it by 'x'
-    const dimensionMatch = dimension.split("x");
+    console.log("Provided dimensions: width: " + params.width + " height: " + params.height);
+    console.log("Request querystring: ", request.querystring);
 
-    // set the width and height parameters
-    let width = parseInt(dimensionMatch[0],10);
-    let height = parseInt(dimensionMatch[1],10);
+    request.querystring = `width=${params.width}&height=${params.height}&format=${params.format}`;
+    console.log("New request querystring: ", request.querystring);
 
-    console.log("width: " + width + " height: " + height);
-
-    // parse the prefix, image name and extension from the uri.
-    // In our case /images/image.jpg
-
-    const match = fwdUri.match(/(.*)\/(.*)\.(.*)/);
-
-    let prefix = match[1];
-    let imageName = match[2];
-    let extension = match[3];
-
-    // define variable to be set to true if requested dimension is allowed.
-    let matchFound = false;
-
-    // calculate the acceptable variance. If image dimension is 105 and is within acceptable
-    // range, then in our case, the dimension would be corrected to 100.
-    let variancePercent = (variables.variance/100);
-
-    for (let dimension of variables.allowedDimension) {
-        let minWidth = dimension.w - (dimension.w * variancePercent);
-        let maxWidth = dimension.w + (dimension.w * variancePercent);
-        if(width >= minWidth && width <= maxWidth){
-            width = dimension.w;
-            height = dimension.h;
-            matchFound = true;
-            break;
-        }
-    }
-    // if no match is found from allowed dimension with variance then set to default
-    //dimensions.
-    if(!matchFound){
-        width = variables.defaultDimension.w;
-        height = variables.defaultDimension.h;
-    }
-
-    // read the accept header to determine if webP is supported.
-    let accept = headers['accept']?headers['accept'][0].value:"";
-
-    let url = [];
-    // build the new uri to be forwarded upstream
-    url.push(prefix);
-    url.push(width+"x"+height);
-  
-    // check support for webp
-    if (accept.includes(variables.webpExtension)) {
-        url.push(variables.webpExtension);
-    }
-    else{
-        url.push(extension);
-    }
-    url.push(imageName+"."+extension);
-
-    fwdUri = url.join("/");
-
-    // final modified url is of format /images/200x200/webp/image.jpg
-    request.uri = fwdUri;
     return request;
+}
+
+function parseParams(params: URLSearchParams, uri: string): ResizeParameters {
+    const widthString = params.get('width');
+    const heightString = params.get('height');
+
+    const format = (params.get('format') || uri.split('.')[1]) as ImageFormat;
+
+    if (widthString === null || heightString === null) {
+        const resizerParams: ResizeParameters = {
+            width: undefined,
+            height: undefined,
+            format
+        }
+        return resizerParams
+    }
+
+    const width: number = (parseInt(widthString, 10) || AllowedDimensions.maxWidth) > AllowedDimensions.maxWidth ?
+        AllowedDimensions.maxWidth : parseInt(widthString, 10);
+    const height: number = (parseInt(heightString, 10) || AllowedDimensions.maxHeight) > AllowedDimensions.maxHeight ?
+        AllowedDimensions.maxHeight : parseInt(heightString, 10);
+
+    const resizerParams: ResizeParameters = {
+        width: width,
+        height: height,
+        format
+    }
+    return resizerParams
+
 }
