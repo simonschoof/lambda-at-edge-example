@@ -39,9 +39,10 @@ S3
         let accountId = callerIdentity.AccountId
 
         let bucketName =
-            $"image-resize-{accountId}-{region.Name}"
+            "images-76b39297-2c72-426d-8c2e-98dc34bfcbe9-eu-central-1"
 
-        let bucketArgs = BucketArgs(Acl = "private")
+        let bucketArgs =
+            BucketArgs(Acl = "private", BucketName = bucketName)
 
         Bucket(bucketName, bucketArgs)
 
@@ -216,7 +217,9 @@ CloudFront
         let forwardedValuesArgs =
             DistributionDefaultCacheBehaviorForwardedValuesArgs(
                 QueryString = true,
-                QueryStringCacheKeys = inputList [ input "width"; input "height"],
+                QueryStringCacheKeys =
+                    inputList [ input "width"
+                                input "height" ],
                 Cookies = forwardeValueCookies
             )
 
@@ -249,7 +252,9 @@ CloudFront
                 MaxTtl = 86400,
                 SmoothStreaming = false,
                 Compress = true,
-                LambdaFunctionAssociations = inputList [ input lambdaViewerRequestAssociation; input lambdaOriginResponseAssociation ]
+                LambdaFunctionAssociations =
+                    inputList [ input lambdaViewerRequestAssociation
+                                input lambdaOriginResponseAssociation ]
             )
 
         let geoRestrictions =
@@ -262,7 +267,7 @@ CloudFront
             DistributionArgs(
                 Origins = originArgs,
                 Enabled = true,
-                Comment = "istribution for content delivery",
+                Comment = "Distribution for content delivery",
                 DefaultRootObject = "index.html",
                 PriceClass = "PriceClass_100",
                 ViewerCertificate = viewerCertificate,
@@ -277,9 +282,13 @@ CloudFront
 Exports
 --------------------
 *)
-    // dict [ ("bucketName", bucket.Id :> obj) ]
-    dict [ ("bucketName", bucket.Id :> obj)
-           ("distribution", cloudFrontDistribution.Id :> obj) ]
+    dict [ ("BucketName", bucket.Id :> obj)
+           ("Distribution", cloudFrontDistribution.Id :> obj)
+           ("LambdaRole", lambdaRole.Arn :> obj)
+           ("OriginAccessIdentity", originAccessIdentity.IamArn :> obj)
+           ("ViewerRequestLambda", viewerRequestLambda.Arn :> obj)
+           ("OriginResponseLambda", originResponseLambda.Arn :> obj)
+           ("ImageBucketPolicy", imageBucketPolicy.Id :> obj) ]
 
 [<EntryPoint>]
 let main _ = Deployment.run infra

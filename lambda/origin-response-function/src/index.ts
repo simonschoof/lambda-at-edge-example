@@ -1,9 +1,5 @@
 import { CloudFrontResultResponse } from "aws-lambda";
 
-// TODO: Add validation for the format
-// type ImageFormat = 'webp' | 'png' | 'jpg';
-// const format = (params.get('format') || uri.split('.')[1]) as ImageFormat;
-
 export async function handler(event: { Records: { cf: { response: any; request: any; } }[]; }): Promise<CloudFrontResultResponse> {
     console.log("Entering origin response function");
     const { response, request } = event.Records[0].cf
