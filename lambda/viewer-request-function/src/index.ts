@@ -1,11 +1,8 @@
 import { CloudFrontRequest } from "aws-lambda";
 
-type ImageFormat = 'webp' | 'png' | 'jpg';
-
 interface ResizeParameters {
     width?: number;
     height?: number;
-    format: ImageFormat;
 }
 
 const AllowedDimensions = {
@@ -15,37 +12,37 @@ const AllowedDimensions = {
 
 export async function handler(event: { Records: { cf: { request: any; } }[]; }): Promise<CloudFrontRequest> {
     console.log("Entering viewer request");
-
     const request = event.Records[0].cf.request;
     const urlsSearchParams = new URLSearchParams(request.querystring);
-    const fwdUri = request.uri;
 
-    const params = parseParams(urlsSearchParams, fwdUri);
+    console.log("Fetching image url", request.uri);
 
-    if (validateParams(params)) {
-        console.log("No dimension params found, returning original image");
-        return request;
+    const params = parseParams(urlsSearchParams);
+
+    if (!validateParams(params)) {
+        console.log("Provided dimensions: width: " + params.width + " height: " + params.height);
+        console.log("Request querystring: ", request.querystring);
+
+        request.querystring = `width=${params.width}&height=${params.height}`;
+        console.log("New request querystring: ", request.querystring);
+
+    } else {
+        console.log("No dimension or invalid dimension params found, returning original image");
+        request.querystring = "";
+        console.log("New request querystring: ", request.querystring);
     }
-    console.log("Provided dimensions: width: " + params.width + " height: " + params.height);
-    console.log("Request querystring: ", request.querystring);
-
-    request.querystring = `width=${params.width}&height=${params.height}&format=${params.format}`;
-    console.log("New request querystring: ", request.querystring);
 
     return request;
 }
 
-function parseParams(params: URLSearchParams, uri: string): ResizeParameters {
+function parseParams(params: URLSearchParams): ResizeParameters {
     const widthString = params.get('width');
     const heightString = params.get('height');
-
-    const format = (params.get('format') || uri.split('.')[1]) as ImageFormat;
 
     if (widthString === null || heightString === null) {
         const resizerParams: ResizeParameters = {
             width: undefined,
             height: undefined,
-            format
         }
         return resizerParams
     }
@@ -58,7 +55,6 @@ function parseParams(params: URLSearchParams, uri: string): ResizeParameters {
     const resizerParams: ResizeParameters = {
         width: width,
         height: height,
-        format
     }
     return resizerParams
 

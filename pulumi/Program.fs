@@ -216,7 +216,7 @@ CloudFront
         let forwardedValuesArgs =
             DistributionDefaultCacheBehaviorForwardedValuesArgs(
                 QueryString = true,
-                QueryStringCacheKeys = inputList [ input "width"; input "height"; input "format" ],
+                QueryStringCacheKeys = inputList [ input "width"; input "height"],
                 Cookies = forwardeValueCookies
             )
 
@@ -249,7 +249,7 @@ CloudFront
                 MaxTtl = 86400,
                 SmoothStreaming = false,
                 Compress = true,
-                LambdaFunctionAssociations = inputList [ input lambdaViewerRequestAssociation ]
+                LambdaFunctionAssociations = inputList [ input lambdaViewerRequestAssociation; input lambdaOriginResponseAssociation ]
             )
 
         let geoRestrictions =
