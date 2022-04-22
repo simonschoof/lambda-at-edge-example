@@ -158,7 +158,18 @@ Lambda
                 Code =
                     input (
                         AssetArchive(
-                            Map<string, AssetOrArchive> [ (".", FileArchive("../lambda/viewer-request-function/dist")) ]
+                            Map<string, AssetOrArchive>
+                                [ ("index.js",
+                                   StringAsset(
+                                       """
+                                       "use strict"; Object.defineProperty(exports, "__esModule", { value: true });
+                                       exports.handler = void 0;
+                                       async function handler(event) {
+                                            return event.Records[0].cf.request;
+                                       } 
+                                       exports.handler = handler;
+                                       """
+                                   )) ]
                         )
                     )
             )
@@ -179,7 +190,17 @@ Lambda
                     input (
                         AssetArchive(
                             Map<string, AssetOrArchive>
-                                [ (".", FileArchive("../lambda/origin-response-function/dist")); ("node_modules", FileArchive("../lambda/origin-response-function/node_modules")) ]
+                                [ ("index.js",
+                                   StringAsset(
+                                       """
+                                       "use strict"; Object.defineProperty(exports, "__esModule", { value: true });
+                                       exports.handler = void 0;
+                                       async function handler(event) {
+                                            return event.Records[0].cf.response;
+                                       } 
+                                       exports.handler = handler;
+                                       """
+                                   )) ]
                         )
                     )
             )
