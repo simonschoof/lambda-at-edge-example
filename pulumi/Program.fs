@@ -179,7 +179,7 @@ Lambda
                     input (
                         AssetArchive(
                             Map<string, AssetOrArchive>
-                                [ (".", FileArchive("../lambda/origin-response-function/dist")) ]
+                                [ (".", FileArchive("../lambda/origin-response-function/dist")); ("node_modules", FileArchive("../lambda/origin-response-function/node_modules")) ]
                         )
                     )
             )
