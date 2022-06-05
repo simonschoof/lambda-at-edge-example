@@ -57,6 +57,4 @@ export async function handler(event: { Records: { cf: { response: any; request: 
         body : resizedImageResponse,
         bodyEncoding : 'base64'
     }
-
-    // return response
 }
