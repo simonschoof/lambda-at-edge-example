@@ -19,25 +19,6 @@ S3
 *)
     let bucket =
 
-        let asyncCallerIndentity =
-            async {
-                let! result = GetCallerIdentity.InvokeAsync() |> Async.AwaitTask
-                return result
-            }
-
-        let asyncRegion =
-            async {
-                let! result = GetRegion.InvokeAsync() |> Async.AwaitTask
-                return result
-            }
-
-        let callerIdentity =
-            Async.RunSynchronously(asyncCallerIndentity)
-
-        let region = Async.RunSynchronously(asyncRegion)
-
-        let accountId = callerIdentity.AccountId
-
         let bucketName =
             "images-76b39297-2c72-426d-8c2e-98dc34bfcbe9-eu-central-1"
 
@@ -45,7 +26,6 @@ S3
             BucketArgs(Acl = "private", BucketName = bucketName)
 
         Bucket(bucketName, bucketArgs)
-
 
     (*
 --------------------
@@ -108,12 +88,11 @@ IAM
                                 io (Output.Format($"{bucket.Arn}/*")) ]
             )
 
-        let putObjectAndListBucketStatement =
+        let listBucketStatement =
             GetPolicyDocumentStatementInputArgs(
                 Principals = inputList [ input lambdaPrincipal ],
                 Actions =
-                    inputList [ input "s3:PutObject"
-                                input "s3:ListBucket" ],
+                    inputList [ input "s3:ListBucket" ],
                 Resources =
                     inputList [ io bucket.Arn
                                 io (Output.Format($"{bucket.Arn}/*")) ]
@@ -124,7 +103,7 @@ IAM
             GetPolicyDocumentInvokeArgs(
                 Statements =
                     inputList [ input getObjectStatement
-                                input putObjectAndListBucketStatement ]
+                                input listBucketStatement ]
             )
 
         let policyDocument =
@@ -179,7 +158,8 @@ Lambda
                     input (
                         AssetArchive(
                             Map<string, AssetOrArchive>
-                                [ (".", FileArchive("../lambda/origin-response-function/dist")); ("node_modules", FileArchive("../lambda/origin-response-function/node_modules")) ]
+                                [ (".", FileArchive("../lambda/origin-response-function/dist"))
+                                  ("node_modules", FileArchive("../lambda/origin-response-function/node_modules")) ]
                         )
                     )
             )
