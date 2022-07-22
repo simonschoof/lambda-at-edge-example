@@ -13,10 +13,10 @@ jobs:
      contents: read
    runs-on: ubuntu-18.04
    steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: 6.0.x
+     - uses: actions/checkout@v2
+     - uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 6.0
      - name: Configure AWS Credentials
        uses: aws-actions/configure-aws-credentials@master
        with:
