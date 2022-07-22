@@ -1,0 +1,23 @@
+name: Deploy CloudFront with Lambda@edge
+
+on:
+  workflow_dispatch:
+    branches:
+      - main  # Set a branch to deploy
+      
+jobs:
+ build:
+   name: build
+   permissions:
+     id-token: write
+     contents: read
+   runs-on: ubuntu-18.04
+   steps:
+     - name: Configure AWS Credentials
+       uses: aws-actions/configure-aws-credentials@master
+       with:
+         aws-region: eu-central-1
+         role-to-assume: arn:aws:iam::424075716607:role/githubActionsRole
+         role-session-name: GithubActionsSession
+    
+     - run: aws sts get-caller-identity
