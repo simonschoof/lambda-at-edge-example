@@ -1,4 +1,4 @@
-name: Deploy CloudFront with Lambda@edge
+name: Deploy CloudFront with Lambda@Edge
 
 on:
   workflow_dispatch:
@@ -7,7 +7,7 @@ on:
 
 jobs:
  build:
-   name: build
+   name: Deploy CloudFront and Lambda@Edge
    permissions:
      id-token: write
      contents: read
