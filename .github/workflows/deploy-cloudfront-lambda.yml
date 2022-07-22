@@ -23,8 +23,8 @@ jobs:
          aws-region: eu-central-1
          role-to-assume: arn:aws:iam::424075716607:role/githubActionsRole
          role-session-name: GithubActionsSession
-      - uses: pulumi/actions@v3
-        working-directory: ./pulumi
-        with:
+     - uses: pulumi/actions@v3
+       with:
+          working-directory: ./pulumi
           command: up
           stack-name: dev
