@@ -1,0 +1,32 @@
+name: Destroy CloudFront with Lambda@edge
+
+on:
+  workflow_dispatch:
+    branches:
+      - main  # Set a branch to deploy
+
+jobs:
+ build:
+   name: build
+   permissions:
+     id-token: write
+     contents: read
+   runs-on: ubuntu-18.04
+   steps:
+     - uses: actions/checkout@v2
+     - uses: actions/setup-dotnet@v1
+       with:
+         dotnet-version: 6.0.x
+     - name: Configure AWS Credentials
+       uses: aws-actions/configure-aws-credentials@master
+       with:
+         aws-region: eu-central-1
+         role-to-assume: arn:aws:iam::424075716607:role/githubActionsRole
+         role-session-name: GithubActionsSession
+     - uses: pulumi/actions@v3
+       with:
+          work-dir: ./pulumi
+          command: destroy
+          stack-name: dev
+       env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
