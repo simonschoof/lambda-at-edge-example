@@ -42,7 +42,7 @@ let infra () =
         GetPolicyDocument.Invoke(policyDocumentInvokeArgs)
 
     Role("githubActionsRole",
-      RoleArgs(AssumeRolePolicy = io (policyDocument.Apply(fun (pd) -> pd.Json)))
+      RoleArgs(Name= "githubActionsRole", AssumeRolePolicy = io (policyDocument.Apply(fun (pd) -> pd.Json)))
         )
 
   dict [("openIdConnectProvider", openIdConnectProvider.Id :> obj);
