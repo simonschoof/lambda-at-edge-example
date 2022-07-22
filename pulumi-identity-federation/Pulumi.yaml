@@ -1,0 +1,3 @@
+name: pulumi-identity-federation
+runtime: dotnet
+description: Identity Federation for GitHub Actions on AWS
