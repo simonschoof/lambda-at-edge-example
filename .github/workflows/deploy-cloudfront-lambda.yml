@@ -27,6 +27,9 @@ jobs:
      
  deploy:
    name: Deploy CloudFront and Lambda@Edge
+   needs:
+     - build-viewer-request
+   if: success()
    permissions:
      id-token: write
      contents: read
