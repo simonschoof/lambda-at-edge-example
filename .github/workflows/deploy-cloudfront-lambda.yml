@@ -20,16 +20,27 @@ jobs:
        run: npm ci --ignore-scripts
      - name: Build function 
        run: npm run build
+     - uses: actions/upload-artifact@v3
+       with:
+         name: viewer-request-function
+         path: lambda/viewer-request-function/dist/
      
-#  deploy:
-#    name: Deploy CloudFront and Lambda@Edge
-#    permissions:
-#      id-token: write
-#      contents: read
-#    runs-on: ubuntu-latest
-#    steps:
-#      - uses: actions/checkout@v3
-#      - uses: actions/setup-dotnet@v2
+ deploy:
+   name: Deploy CloudFront and Lambda@Edge
+   permissions:
+     id-token: write
+     contents: read
+   runs-on: ubuntu-latest
+   steps:
+     - uses: actions/checkout@v3
+     - uses: actions/download-artifact@v3
+       with:
+         name: viewer-request-function
+         path: lambda/viewer-request-function/
+     - name: Display structure of downloaded files
+       run: ls -R
+       working-directory: lambda/viewer-request-function/dist
+#     - uses: actions/setup-dotnet@v2
 #        with:
 #          dotnet-version: 6.0.x
 #      - name: Configure AWS Credentials
