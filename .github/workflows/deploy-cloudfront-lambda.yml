@@ -42,7 +42,6 @@ jobs:
          path: ~/
      - name: Display structure of downloaded files
        run: ls -R
-       working-directory: lambda/viewer-request-function/dist
 #     - uses: actions/setup-dotnet@v2
 #        with:
 #          dotnet-version: 6.0.x
