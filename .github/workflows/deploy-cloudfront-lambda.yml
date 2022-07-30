@@ -39,7 +39,7 @@ jobs:
      - uses: actions/download-artifact@v3
        with:
          name: viewer-request-function
-         path: ~/
+         path: lambda/viewer-request-function
      - name: Display structure of downloaded files
        run: ls -R
 #     - uses: actions/setup-dotnet@v2
