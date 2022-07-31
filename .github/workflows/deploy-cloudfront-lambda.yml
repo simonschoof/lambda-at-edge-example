@@ -40,21 +40,21 @@ jobs:
        with:
          name: viewer-request-function
          path: lambda/viewer-request-function/dist
-     - name: Display structure of downloaded files
-       run: ls -R
-#     - uses: actions/setup-dotnet@v2
-#        with:
-#          dotnet-version: 6.0.x
-#      - name: Configure AWS Credentials
-#        uses: aws-actions/configure-aws-credentials@master
-#        with:
-#          aws-region: eu-central-1
-#          role-to-assume: arn:aws:iam::424075716607:role/githubActionsRole
-#          role-session-name: GithubActionsSession
-#      - uses: pulumi/actions@v3
-#        with:
-#           work-dir: ./pulumi
-#           command: up
-#           stack-name: dev
-#        env:
-#           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+    #  - name: Display structure of downloaded files
+    #    run: ls -R
+     - uses: actions/setup-dotnet@v2
+       with:
+         dotnet-version: 6.0.x
+     - name: Configure AWS Credentials
+       uses: aws-actions/configure-aws-credentials@master
+       with:
+         aws-region: eu-central-1
+         role-to-assume: arn:aws:iam::424075716607:role/githubActionsRole
+         role-session-name: GithubActionsSession
+     - uses: pulumi/actions@v3
+       with:
+          work-dir: ./pulumi
+          command: up
+          stack-name: dev
+       env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
