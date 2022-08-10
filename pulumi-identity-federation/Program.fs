@@ -10,7 +10,34 @@ let infra () =
 
         let cloudFrontStatement =
             GetPolicyDocumentStatementInputArgs(
-                Actions = inputList [ input "cloudfront:CreateCloudFrontOriginAccessIdentity" ],
+                Actions = inputList [ input "cloudfront:CreateCloudFrontOriginAccessIdentity";
+                input "cloudfront:GetCloudFrontOriginAccessIdentity";
+                input "cloudfront:UpdateCloudFrontOriginAccessIdentity";
+                input "cloudfront:DeleteCloudFrontOriginAccessIdentity";
+                input "s3:CreateBucket";
+                input "s3:DeleteBucket";
+                input "s3:ListBucket";
+                input "s3:ListAllMyBuckets";
+                input "s3:GetBucketAcl";
+                input "s3:GetBucketCORS";
+                input "s3:GetBucketWebsite";
+                input "s3:GetBucketVersioning";
+                input "s3:GetAccelerateConfiguration";
+                input "s3:GetBucketRequestPayment";
+                input "s3:GetBucketLogging";
+                input "lambda:CreateFunction";
+                input "lambda:UpdateFunctionCode";
+                input "lambda:DeleteFunction";
+                input "lambda:PublishVersion";
+                input "iam:AttachRolePolicy";
+                input "iam:CreateRole";
+                input "iam:GetRole";
+                input "iam:ListInstanceProfilesForRole";
+                input "iam:ListAttachedRolePolicies";
+                input "iam:ListRoles";
+                input "iam:ListRolePolicies";
+                input "iam:DetachRolePolicy";
+                input "iam:DeleteRole" ],
                 Resources =
                     inputList [ input "*" ]
             )
