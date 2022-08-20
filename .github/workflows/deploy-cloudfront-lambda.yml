@@ -24,11 +24,32 @@ jobs:
        with:
          name: viewer-request-function
          path: lambda/viewer-request-function/dist/
+
+ build-origin-response:
+   runs-on: ubuntu-latest
+   defaults:
+     run:
+       working-directory: lambda/origin-response-function
+   steps:
+     - uses: actions/checkout@v3
+     - name: Run the build process with Docker
+       uses: addnab/docker-run-action@v3
+       with:
+         image: amazonlinux:nodejs
+         options: -v ${PWD}:/build
+         run: |
+            npm ci --ignore-scripts
+            npm run build
+     - uses: actions/upload-artifact@v3
+       with:
+         name: origin-respons-function
+         path: lambda/origin-response-function/dist/
      
  deploy:
    name: Deploy CloudFront and Lambda@Edge
    needs:
      - build-viewer-request
+     - build-origin-response
    if: success()
    permissions:
      id-token: write
