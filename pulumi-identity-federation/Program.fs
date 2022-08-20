@@ -25,6 +25,8 @@ let infra () =
                 input "s3:GetAccelerateConfiguration";
                 input "s3:GetBucketRequestPayment";
                 input "s3:GetBucketLogging";
+                input "s3:GetBucketPolicy";
+                input "s3:PutBucketPolicy";
                 input "lambda:CreateFunction";
                 input "lambda:UpdateFunctionCode";
                 input "lambda:DeleteFunction";
