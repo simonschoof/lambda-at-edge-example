@@ -32,17 +32,13 @@ jobs:
        working-directory: lambda/origin-response-function
    steps:
      - uses: actions/checkout@v3
-     - name: Run the build process with Docker
-       uses: addnab/docker-run-action@v3
-       with:
-         image: amazonlinux:nodejs
-         options: -v ${PWD}:/build
-         run: |
-            npm ci --ignore-scripts
-            npm run build
+     - name: Install dependencies and build function
+       run: | 
+         - docker build --tag amazonlinux:nodejs .
+         - docker run --rm --volume ${PWD}:/build amazonlinux:nodejs /bin/bash -c "source ~/.bashrc; npm init -f -y; rm -rf node_modules; npm ci install; npm run build"  
      - uses: actions/upload-artifact@v3
        with:
-         name: origin-respons-function
+         name: origin-response-function
          path: lambda/origin-response-function/dist/
      
  deploy:
