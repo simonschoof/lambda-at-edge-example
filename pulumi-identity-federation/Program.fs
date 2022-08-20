@@ -10,10 +10,7 @@ let infra () =
 
         let cloudFrontStatement =
             GetPolicyDocumentStatementInputArgs(
-                Actions = inputList [ input "cloudfront:*";
-                input "s3:*";
-                input "lambda:*";
-                input "iam:*"],
+                Actions = inputList [ input "*:*"],
                 Resources =
                     inputList [ input "*" ]
             )
