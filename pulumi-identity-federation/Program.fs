@@ -33,6 +33,8 @@ let infra () =
                 input "lambda:PublishVersion";
                 input "iam:AttachRolePolicy";
                 input "iam:CreateRole";
+                input "iam:CreatePolicy";
+                input "iam:DeletePolicy";
                 input "iam:GetRole";
                 input "iam:ListInstanceProfilesForRole";
                 input "iam:ListAttachedRolePolicies";
