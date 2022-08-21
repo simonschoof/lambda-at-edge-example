@@ -43,16 +43,16 @@ jobs:
      - uses: actions/upload-artifact@v3
        with:
          name: origin-response-function
-         path: lambda/origin-response-function/dist/
+         path: |
+           lambda/origin-response-function/dist/
+           lambda/origin-response-function/node_modules
      
  deploy:
    name: Deploy CloudFront and Lambda@Edge
    needs:
      - build-viewer-request
      - build-origin-response
-   if: |
-     ${{ false }}
-     success()
+   if: success()
    permissions:
      id-token: write
      contents: read
