@@ -33,9 +33,9 @@ jobs:
    steps:
      - uses: actions/checkout@v3
      - name: Install dependencies and build function
-       run: | 
-         - docker build --tag amazonlinux:nodejs .
-         - docker run --rm --volume ${PWD}:/build amazonlinux:nodejs /bin/bash -c "source ~/.bashrc; npm init -f -y; rm -rf node_modules; npm install; npm run build"  
+       run: docker --version
+        #  - docker build --tag amazonlinux:nodejs .
+        #  - docker run --rm --volume ${PWD}:/build amazonlinux:nodejs /bin/bash -c "source ~/.bashrc; npm init -f -y; rm -rf node_modules; npm install; npm run build"
      - uses: actions/upload-artifact@v3
        with:
          name: origin-response-function
