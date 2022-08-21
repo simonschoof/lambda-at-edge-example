@@ -65,6 +65,14 @@ jobs:
          path: lambda/viewer-request-function/dist
     #  - name: Display structure of downloaded files
     #    run: ls -R
+     - uses: actions/download-artifact@v3
+       with:
+         name: origin-response-function
+         path: |
+           lambda/origin-response-function/dist
+           lambda/origin-response-function/node_modules
+     - name: Display structure of downloaded files
+       run: ls -R
      - uses: actions/setup-dotnet@v2
        with:
          dotnet-version: 6.0.x
