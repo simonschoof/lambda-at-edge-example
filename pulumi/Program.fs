@@ -91,7 +91,8 @@ IAM
         let listBucketStatement =
             GetPolicyDocumentStatementInputArgs(
                 Principals = inputList [ input lambdaPrincipal ],
-                Actions = inputList [ input "s3:ListBucket" ],
+                Actions =
+                    inputList [ input "s3:ListBucket" ],
                 Resources =
                     inputList [ io bucket.Arn
                                 io (Output.Format($"{bucket.Arn}/*")) ]
@@ -157,17 +158,8 @@ Lambda
                     input (
                         AssetArchive(
                             Map<string, AssetOrArchive>
-                                [ ("index.js",
-                                   StringAsset(
-                                       """
-                        "use strict"; Object.defineProperty(exports, "__esModule", { value: true });
-                        exports.handler = void 0;
-                        async function handler(event) {
-                            return event.Records[0].cf.response;
-                        }
-                        exports.handler = handler;
-                        """
-                                   )) ]
+                                [ (".", FileArchive("../lambda/origin-response-function/dist"))
+                                  ("node_modules", FileArchive("../lambda/origin-response-function/node_modules")) ]
                         )
                     )
             )
